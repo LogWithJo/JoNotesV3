@@ -1,14 +1,13 @@
 import { apiClient } from '../../../shared/api';
+import {
+  notesFilterSchema,
+  notesSchemaArray,
+  type NotesFilters,
+} from '../model/notes.schema';
 
-type FilterParams = {
-  category: string;
-  search: string;
-  sort: 'oldest' | 'az' | 'za';
-};
-
-export type FilterParam = keyof FilterParams;
-
-export async function getNotes(param?: FilterParam) {
-  const res = await apiClient.get('/notes', { params: param });
-  return res;
+export async function getNotes(data?: NotesFilters) {
+  const results = notesFilterSchema.safeParse(data);
+  const payload = results.success ? results.data : undefined;
+  const res = await apiClient.get('/notes', { params: payload });
+  return notesSchemaArray.parse(res.data);
 }

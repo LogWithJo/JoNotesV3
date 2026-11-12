@@ -1,14 +1,13 @@
 import type React from 'react';
 import { useGetMe } from '../entities/user';
-import { useContinueAuth } from '../features/user-login';
 import { useLogout } from '../features/user-logout';
 import { useState, type Dispatch, type SetStateAction } from 'react';
 import { useNotes } from '../entities/notes';
 import { useAddNote } from '../features/add-note/api/use-add-note';
 import { useEditNote } from '../features/edit-note/api/use-edit-note';
 import { useDeleteNote } from '../features/delete-note/api/use-delete-note';
-import { useEditNote as useGetNote } from '../features/get-note/api/use-note';
 import { useTogglePin } from '../features/toggle-pin/api/use-toggle-pin';
+import { useLogin } from '../features/user-login';
 
 type Props = {
   isAuth: boolean;
@@ -42,9 +41,9 @@ function User({ isAuth }: Pick<Props, 'isAuth'>) {
 
   return (
     <div>
-      <div>{data?.data.user.createdAt}</div>
-      <div>{data?.data.user.email}</div>
-      <div>{data?.data.user.id}</div>
+      <div>{data?.user.email}</div>
+      <div>{data?.user.id}</div>
+      <div>{data?.user.createdAt}</div>
       <div>{isLoading && 'loading...'}</div>
       <div>{isError && 'error'}</div>
     </div>
@@ -65,7 +64,7 @@ function Logout({ isAuth, onSuccess }: Props) {
           mutate(undefined, { onSuccess: () => onSuccess(false) });
         }}
       >
-        logut
+        logout
       </button>
       <div>{isPending && 'loading...'}</div>
       <div>{isError && 'error'}</div>
@@ -76,7 +75,7 @@ function Logout({ isAuth, onSuccess }: Props) {
 function Login({ isAuth, onSuccess }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { mutate, isPending, isError } = useContinueAuth();
+  const { mutate, isPending, isError } = useLogin();
 
   if (isAuth) {
     return;
@@ -131,7 +130,6 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
   const addNote = useAddNote();
   const editNote = useEditNote();
   const deleteNote = useDeleteNote();
-  const getNote = useGetNote();
   const togglePin = useTogglePin();
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
   const [title, setTitle] = useState('');
@@ -145,17 +143,34 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          addNote.mutate(
-            { title, content, category },
-            {
-              onSuccess: () => {
-                setSelectedNoteId(null);
-                setTitle('');
-                setContent('');
-                setCategory('');
+          if (selectedNoteId !== null) {
+            editNote.mutate(
+              {
+                id: selectedNoteId,
+                data: { title, content, category },
               },
-            },
-          );
+              {
+                onSuccess: () => {
+                  setSelectedNoteId(null);
+                  setTitle('');
+                  setContent('');
+                  setCategory('');
+                },
+              },
+            );
+          } else {
+            addNote.mutate(
+              { title, category },
+              {
+                onSuccess: () => {
+                  setSelectedNoteId(null);
+                  setTitle('');
+                  setContent('');
+                  setCategory('');
+                },
+              },
+            );
+          }
         }}
       >
         <input
@@ -163,23 +178,29 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
-        <textarea
-          placeholder="content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-        />
+        {selectedNoteId !== null && (
+          <textarea
+            placeholder="content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+        )}
         <input
           placeholder="category"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         />
-        <button type="submit">add note</button>
+        <button type="submit">
+          {selectedNoteId !== null ? 'save note' : 'add note'}
+        </button>
       </form>
       <div>{addNote.isPending && 'loading...'}</div>
       <div>{addNote.isError && 'error'}</div>
+      <div>{editNote.isPending && 'loading...'}</div>
+      <div>{editNote.isError && 'error'}</div>
       <div>{isLoading && 'loading...'}</div>
       <div>{isError && 'error'}</div>
-      {data?.data.map(
+      {data?.map(
         (note: {
           id: number;
           title: string;
@@ -194,7 +215,6 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
                 setTitle(note.title);
                 setContent(note.content);
                 setCategory(note.category);
-                getNote.mutate(note.id);
               }}
             >
               {note.title}
@@ -205,19 +225,16 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
             <button
               type="button"
               onClick={() =>
-                deleteNote.mutate(
-                  { id: note.id },
-                  {
-                    onSuccess: () => {
-                      if (selectedNoteId === note.id) {
-                        setSelectedNoteId(null);
-                        setTitle('');
-                        setContent('');
-                        setCategory('');
-                      }
-                    },
+                deleteNote.mutate(note.id, {
+                  onSuccess: () => {
+                    if (selectedNoteId === note.id) {
+                      setSelectedNoteId(null);
+                      setTitle('');
+                      setContent('');
+                      setCategory('');
+                    }
                   },
-                )
+                })
               }
             >
               delete
@@ -225,25 +242,6 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           </div>
         ),
       )}
-      <div>{getNote.isPending && 'loading...'}</div>
-      <div>{getNote.isError && 'error'}</div>
-      {selectedNoteId !== null && (
-        <button
-          type="button"
-          onClick={() =>
-            editNote.mutate({
-              id: selectedNoteId,
-              title,
-              content,
-              category,
-            })
-          }
-        >
-          save note
-        </button>
-      )}
-      <div>{editNote.isPending && 'loading...'}</div>
-      <div>{editNote.isError && 'error'}</div>
       <div>{deleteNote.isPending && 'loading...'}</div>
       <div>{deleteNote.isError && 'error'}</div>
       <div>{togglePin.isPending && 'loading...'}</div>

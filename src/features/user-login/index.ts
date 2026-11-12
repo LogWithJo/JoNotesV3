@@ -1,1 +1,1 @@
-export { useContinueAuth } from './api/use-continue-auth';
+export { useLogin } from './api/use-login';

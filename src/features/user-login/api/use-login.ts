@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authKeys } from '../../../entities/user';
 import { continueAuth } from './login.api';
+import type { LoginInput } from '../model/login.schema';
 
-type authParams = { email: string; password: string };
-
-export const useContinueAuth = () => {
+export const useLogin = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ email, password }: authParams) => {
-      return continueAuth(email, password);
+    mutationFn: (data: LoginInput) => {
+      console.log(data);
+      return continueAuth(data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: authKeys.me });

@@ -1,15 +1,23 @@
+import { noteIdSchema, noteSchema } from '../../../entities/notes';
 import { apiClient } from '../../../shared/api';
-import type { AddNotesProps } from '../../add-note/';
+import {
+  editNoteInputSchema,
+  type EditNoteParams,
+} from '../model/edit-note.schema';
 
-export type Props = AddNotesProps & {
-  id: number;
-};
-
-export async function editNote({ category, title, content, id }: Props) {
+export async function editNote({ data, id }: EditNoteParams) {
+  const parseId = noteIdSchema.safeParse(id);
+  const validPayload = editNoteInputSchema.safeParse(data);
+  if (!parseId.success || !validPayload.success) {
+    throw new Error(
+      parseId.success
+        ? `invalid type: ${parseId.error}`
+        : `invalid typed data: ${validPayload.error?.message}`,
+    );
+  }
   const res = await apiClient.patch(
-    '/notes',
-    { content, title, category },
-    { params: id },
+    `/notes/${parseId.data}`,
+    validPayload.data,
   );
-  return res;
+  return noteSchema.parse(res.data);
 }

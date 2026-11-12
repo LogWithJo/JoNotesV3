@@ -1,13 +1,14 @@
 import type React from 'react';
-import { useGetMe } from '../entities/user';
 import { useLogout } from '../features/user-logout';
 import { useState, type Dispatch, type SetStateAction } from 'react';
-import { useNotes } from '../entities/notes';
 import { useAddNote } from '../features/add-note/api/use-add-note';
 import { useEditNote } from '../features/edit-note/api/use-edit-note';
 import { useDeleteNote } from '../features/delete-note/api/use-delete-note';
 import { useTogglePin } from '../features/toggle-pin/api/use-toggle-pin';
 import { useLogin } from '../features/user-login';
+import { useQuery } from '@tanstack/react-query';
+import { getMeOptions } from '../entities/user';
+import { getNotesOptions } from '../entities/notes';
 
 type Props = {
   isAuth: boolean;
@@ -35,7 +36,7 @@ function App() {
 export default App;
 
 function User({ isAuth }: Pick<Props, 'isAuth'>) {
-  const { data, isLoading, isError } = useGetMe();
+  const { data, isLoading, isError } = useQuery(getMeOptions());
 
   if (!isAuth) return;
 
@@ -126,7 +127,7 @@ function Login({ isAuth, onSuccess }: Props) {
 }
 
 function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
-  const { data, isLoading, isError } = useNotes();
+  const { data, isLoading, isError } = useQuery(getNotesOptions());
   const addNote = useAddNote();
   const editNote = useEditNote();
   const deleteNote = useDeleteNote();

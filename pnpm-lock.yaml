@@ -14,6 +14,9 @@ importers:
       axios:
         specifier: ^1.21.0
         version: 1.21.0(debug@4.4.3)
+      jonotesv3:
+        specifier: 'link:'
+        version: 'link:'
       react:
         specifier: ^19.3.1
         version: 19.3.1

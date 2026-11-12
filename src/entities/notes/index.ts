@@ -1,4 +1,4 @@
-export { useNotes } from './api/use-notes';
+export { getNotesOptions } from './api/use-notes';
 export { notesKeys } from './api/keys';
 export {
   noteSchema,

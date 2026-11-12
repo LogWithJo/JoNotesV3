@@ -10,8 +10,6 @@ export const useLogin = () => {
       console.log(data);
       return continueAuth(data);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: authKeys.me });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: authKeys.me }),
   });
 };

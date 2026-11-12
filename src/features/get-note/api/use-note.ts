@@ -2,12 +2,11 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getNote } from './get-note.api';
 import { notesKeys, type NoteId } from '../../../entities/notes';
 
-export const useEditNote = () => {
+export const useNote = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: NoteId) => getNote(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notesKeys.notes });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: notesKeys.notes }),
   });
 };

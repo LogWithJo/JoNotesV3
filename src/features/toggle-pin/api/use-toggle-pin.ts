@@ -6,8 +6,7 @@ export const useTogglePin = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: NoteId) => togglePin(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notesKeys.notes });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: notesKeys.notes }),
   });
 };

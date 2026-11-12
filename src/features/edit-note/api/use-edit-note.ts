@@ -7,8 +7,7 @@ export const useEditNote = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (params: EditNoteParams) => editNote(params),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: notesKeys.notes });
-    },
+    onSuccess: () =>
+      queryClient.invalidateQueries({ queryKey: notesKeys.notes }),
   });
 };

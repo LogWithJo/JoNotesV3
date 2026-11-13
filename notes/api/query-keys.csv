@@ -1,0 +1,12 @@
+Entity,	Read,	Inputs,	Key,	Invalidated by
+Note, lists, i don't find inputs,  ['notes'_ 'lists'], createnote-deletenote-updatenote-togglepin-userlogin-userlogout
+Note, list, filters, ['notes'_ 'lists'_ paramsfilter], createnote-deletenote-updatenote-togglepin-userlogin-userlogout
+Note, detail, noteid, ['notes'_ 'detail'], addnote-deletenote-editnote-getnote
+User, usergetme, userdata, ['getme'], getme-login-logout
+
+
+
+Entity,	Read,	Inputs,	Key,	Refreshed by
+Note,	list,	filters (can be empty),	['notes'_'list'_filters],	createNote, deleteNote-updateNote-togglePin
+Note,	detail	,noteId,	['notes'_'detail'_noteId],	updateNote, togglePin (deleteNote removes it)
+User,	me	none,,	['user'_'me'],	login (set data), logout (clear all)

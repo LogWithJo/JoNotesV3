@@ -19,7 +19,7 @@
 
 ## Overview
 
-JoNotesV3 is the frontend client for a note-taking application. Users can sign in, view notes, add notes with a title and category, edit a note's title, category, and content, delete notes, and toggle their pinned state. The client communicates with a separate API service.
+JoNotesV3 is the frontend client for a note-taking application. Users can sign in with their name and email, view notes, add notes with a title and category, edit a note's title, category, and content, delete notes, and toggle their pinned state. They can also filter notes by category, search them, and sort them by date or title. The client communicates with a separate API service.
 
 ## Tech Stack
 
@@ -80,8 +80,11 @@ Variables prefixed with `VITE_` are exposed to browser code. Do not place secret
 ```text
 .
 ├── notes/
-│   ├── AI/                     # AI prompt template
-│   ├── api/                    # API endpoint and authentication notes
+│   ├── AI/                     # AI prompt templates
+│   ├── api/                    # API, authentication, and query-key notes
+│   │   ├── query-keys.csv      # Query-key reference data
+│   │   ├── query-keys.excalidraw # Query-key diagram
+│   │   └── query-keys.md       # Query-key reference
 │   └── plan/                   # Project learning plan
 ├── src/
 │   ├── app/                    # Root application components
@@ -132,13 +135,14 @@ The source is organized by application layer and feature. Feature-specific API o
 - `src/main.tsx` mounts the React application and wraps it in `StrictMode` and the TanStack Query provider.
 - `src/app/App.tsx` composes the current user, login, logout, and notes UI.
 - Feature directories contain their API functions, TanStack Query hooks, and input schemas where applicable.
-- Entity directories contain reusable schemas, types, queries, and query keys.
+- Entity directories contain reusable schemas, types, query option factories, and query keys.
 - Components use PascalCase names; hooks use the `use` prefix. Source files use relative imports.
 
 ## State Management and Data Fetching
 
 - React `useState` holds form values and the client-side authentication flag. The flag is persisted in browser local storage under `isAuth`.
-- TanStack Query loads the current user and notes. Successful note mutations invalidate the notes query; successful login and logout invalidate the current-user query.
+- TanStack Query loads the current user and notes. The notes query accepts category, search, and sort filters, and keeps the previous results visible while fetching updated results. Successful note mutations invalidate note-list and affected detail queries; successful login and logout invalidate the current-user query.
+- The note query-key structure is documented in [the query-key reference](notes/api/query-keys.md).
 - The shared Axios client uses `VITE_API_BASE_URL`, JSON headers, a 10-second timeout, and credentialed requests. The authentication flow relies on the API's cookie handling.
 - Zod schemas validate API responses and mutation inputs. The query client retries failed queries twice by default.
 - The frontend calls the API routes described in [the API endpoint notes](notes/api/API_Endpoints.md).

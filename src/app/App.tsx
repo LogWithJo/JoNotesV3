@@ -6,7 +6,7 @@ import { useEditNote } from '../features/edit-note/api/use-edit-note';
 import { useDeleteNote } from '../features/delete-note/api/use-delete-note';
 import { useTogglePin } from '../features/toggle-pin/api/use-toggle-pin';
 import { useLogin } from '../features/user-login';
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getMeOptions } from '../entities/user';
 import { getNotesOptions } from '../entities/notes';
 
@@ -74,6 +74,7 @@ function Logout({ isAuth, onSuccess }: Props) {
 }
 
 function Login({ isAuth, onSuccess }: Props) {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { mutate, isPending, isError } = useLogin();
@@ -85,9 +86,10 @@ function Login({ isAuth, onSuccess }: Props) {
   function handlesubmit(e: React.FormEvent) {
     e.preventDefault();
     mutate(
-      { email, password },
+      { name, email, password },
       {
         onSuccess: () => {
+          setName('');
           setEmail('');
           setPassword('');
           onSuccess(true);
@@ -99,6 +101,16 @@ function Login({ isAuth, onSuccess }: Props) {
     <form action="">
       <div>{isPending && 'loading...'}</div>
       <div>{isError && 'error'}</div>
+      <input
+        placeholder="name"
+        type="text"
+        name="name"
+        id="name"
+        value={name}
+        onChange={(e) => {
+          setName(e.target.value);
+        }}
+      />
       <input
         placeholder="email"
         type="email"
@@ -127,7 +139,6 @@ function Login({ isAuth, onSuccess }: Props) {
 }
 
 function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
-  const { data, isLoading, isError } = useQuery(getNotesOptions());
   const addNote = useAddNote();
   const editNote = useEditNote();
   const deleteNote = useDeleteNote();
@@ -136,6 +147,15 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [category, setCategory] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
+  const [appliedFilter, setAppliedFilter] =
+    useState<Parameters<typeof getNotesOptions>[0]>(undefined);
+  const { data, isLoading, isError, isPlaceholderData } = useQuery({
+    ...getNotesOptions(appliedFilter),
+    placeholderData: keepPreviousData,
+  });
 
   if (!isAuth) return;
 
@@ -201,48 +221,100 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
       <div>{editNote.isError && 'error'}</div>
       <div>{isLoading && 'loading...'}</div>
       <div>{isError && 'error'}</div>
-      {data?.map(
-        (note: {
-          id: number;
-          title: string;
-          content: string;
-          category: string;
-        }) => (
-          <div key={note.id}>
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedNoteId(note.id);
-                setTitle(note.title);
-                setContent(note.content);
-                setCategory(note.category);
-              }}
-            >
-              {note.title}
-            </button>
-            <button type="button" onClick={() => togglePin.mutate(note.id)}>
-              toggle pin
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                deleteNote.mutate(note.id, {
-                  onSuccess: () => {
-                    if (selectedNoteId === note.id) {
-                      setSelectedNoteId(null);
-                      setTitle('');
-                      setContent('');
-                      setCategory('');
-                    }
-                  },
-                })
-              }
-            >
-              delete
-            </button>
-          </div>
-        ),
-      )}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setAppliedFilter({
+            category: filterCategory.trim() || undefined,
+            search: search.trim() || undefined,
+            sort,
+          });
+        }}
+      >
+        <input
+          placeholder="filter by category"
+          value={filterCategory}
+          onChange={(e) => setFilterCategory(e.target.value)}
+        />
+        <input
+          placeholder="search notes"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <button type="button" onClick={() => setSort('newest')}>
+          newest
+        </button>
+        <button type="button" onClick={() => setSort('oldest')}>
+          oldest
+        </button>
+        <button type="button" onClick={() => setSort('az')}>
+          A-Z
+        </button>
+        <button type="button" onClick={() => setSort('za')}>
+          Z-A
+        </button>
+        <button type="submit">filter notes</button>
+        <button
+          type="button"
+          onClick={() => {
+            setFilterCategory('');
+            setSearch('');
+            setSort('newest');
+            setAppliedFilter(undefined);
+          }}
+        >
+          clear filters
+        </button>
+      </form>
+      <div
+        style={{
+          opacity: isPlaceholderData ? 0.5 : 1,
+          transition: 'opacity 0.2s',
+        }}
+      >
+        {data?.map(
+          (note: {
+            id: number;
+            title: string;
+            content: string;
+            category: string;
+          }) => (
+            <div key={note.id}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedNoteId(note.id);
+                  setTitle(note.title);
+                  setContent(note.content);
+                  setCategory(note.category);
+                }}
+              >
+                {note.title}
+              </button>
+              <button type="button" onClick={() => togglePin.mutate(note.id)}>
+                toggle pin
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  deleteNote.mutate(note.id, {
+                    onSuccess: () => {
+                      if (selectedNoteId === note.id) {
+                        setSelectedNoteId(null);
+                        setTitle('');
+                        setContent('');
+                        setCategory('');
+                      }
+                    },
+                  })
+                }
+              >
+                delete
+              </button>
+            </div>
+          ),
+        )}
+      </div>
       <div>{deleteNote.isPending && 'loading...'}</div>
       <div>{deleteNote.isError && 'error'}</div>
       <div>{togglePin.isPending && 'loading...'}</div>

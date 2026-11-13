@@ -20,6 +20,7 @@ export const noteSchema = z.object({
 export const noteIdSchema = z
   .number({ error: 'Note ID is required and must be a number' })
   .int('Note ID must be a whole number')
+  .positive()
   .min(1, 'Note ID must be at least 1');
 
 export const notesSchemaArray = z.array(noteSchema);

@@ -9,6 +9,7 @@ import { useLogin } from '../features/user-login';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { getMeOptions } from '../entities/user';
 import { getNotesOptions } from '../entities/notes';
+import { useDebounceValue } from 'usehooks-ts';
 
 type Props = {
   isAuth: boolean;
@@ -150,8 +151,9 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
   const [filterCategory, setFilterCategory] = useState('');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
-  const [appliedFilter, setAppliedFilter] =
+  const [appliedFilterValue, setAppliedFilter] =
     useState<Parameters<typeof getNotesOptions>[0]>(undefined);
+  const [appliedFilter] = useDebounceValue(appliedFilterValue, 1000);
   const { data, isLoading, isError, isPlaceholderData } = useQuery({
     ...getNotesOptions(appliedFilter),
     placeholderData: keepPreviousData,
@@ -221,39 +223,83 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
       <div>{editNote.isError && 'error'}</div>
       <div>{isLoading && 'loading...'}</div>
       <div>{isError && 'error'}</div>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          setAppliedFilter({
-            category: filterCategory.trim() || undefined,
-            search: search.trim() || undefined,
-            sort,
-          });
-        }}
-      >
+      <div>
         <input
           placeholder="filter by category"
           value={filterCategory}
-          onChange={(e) => setFilterCategory(e.target.value)}
+          onChange={(e) => {
+            setFilterCategory(e.target.value);
+            setAppliedFilter({
+              category: e.target.value.trim() || undefined,
+              search: search.trim() || undefined,
+              sort,
+            });
+          }}
         />
         <input
           placeholder="search notes"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setAppliedFilter({
+              category: filterCategory.trim() || undefined,
+              search: e.target.value.trim() || undefined,
+              sort,
+            });
+          }}
         />
-        <button type="button" onClick={() => setSort('newest')}>
+        <button
+          type="button"
+          onClick={() => {
+            setSort('newest');
+            setAppliedFilter({
+              category: filterCategory.trim() || undefined,
+              search: search.trim() || undefined,
+              sort: 'newest',
+            });
+          }}
+        >
           newest
         </button>
-        <button type="button" onClick={() => setSort('oldest')}>
+        <button
+          type="button"
+          onClick={() => {
+            setSort('oldest');
+            setAppliedFilter({
+              category: filterCategory.trim() || undefined,
+              search: search.trim() || undefined,
+              sort: 'oldest',
+            });
+          }}
+        >
           oldest
         </button>
-        <button type="button" onClick={() => setSort('az')}>
+        <button
+          type="button"
+          onClick={() => {
+            setSort('az');
+            setAppliedFilter({
+              category: filterCategory.trim() || undefined,
+              search: search.trim() || undefined,
+              sort: 'az',
+            });
+          }}
+        >
           A-Z
         </button>
-        <button type="button" onClick={() => setSort('za')}>
+        <button
+          type="button"
+          onClick={() => {
+            setSort('za');
+            setAppliedFilter({
+              category: filterCategory.trim() || undefined,
+              search: search.trim() || undefined,
+              sort: 'za',
+            });
+          }}
+        >
           Z-A
         </button>
-        <button type="submit">filter notes</button>
         <button
           type="button"
           onClick={() => {
@@ -265,7 +311,7 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
         >
           clear filters
         </button>
-      </form>
+      </div>
       <div
         style={{
           opacity: isPlaceholderData ? 0.5 : 1,

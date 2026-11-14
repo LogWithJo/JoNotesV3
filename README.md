@@ -19,13 +19,14 @@
 
 ## Overview
 
-JoNotesV3 is the frontend client for a note-taking application. Users can sign in with their name and email, view notes, add notes with a title and category, edit a note's title, category, and content, delete notes, and toggle their pinned state. They can also filter notes by category, search them, and sort them by date or title. The client communicates with a separate API service.
+JoNotesV3 is the frontend client for a note-taking application. Users can sign in with their name and email, view notes, add notes with a title and category, edit a note's title, category, and content, delete notes, and toggle their pinned state. They can also filter notes by category, search them, and sort them by date or title; filter changes apply automatically after a one-second pause. The client communicates with a separate API service.
 
 ## Tech Stack
 
 - React 19 and TypeScript
 - Vite 8 with the React plugin and React Compiler Babel preset
 - TanStack Query for server data and mutations
+- usehooks-ts for debouncing note filters
 - Axios for HTTP requests
 - Zod for request and response schemas
 - ESLint with TypeScript, React Hooks, and React Refresh rules
@@ -141,7 +142,7 @@ The source is organized by application layer and feature. Feature-specific API o
 ## State Management and Data Fetching
 
 - React `useState` holds form values and the client-side authentication flag. The flag is persisted in browser local storage under `isAuth`.
-- TanStack Query loads the current user and notes. The notes query accepts category, search, and sort filters, and keeps the previous results visible while fetching updated results. Successful note mutations invalidate note-list and affected detail queries; successful login and logout invalidate the current-user query.
+- TanStack Query loads the current user and notes. The notes query accepts category, search, and sort filters; changes are applied after a one-second debounce, and previous results stay visible while updated results are fetched. Successful note mutations invalidate note-list and affected detail queries; successful login and logout invalidate the current-user query.
 - The note query-key structure is documented in [the query-key reference](notes/api/query-keys.md).
 - The shared Axios client uses `VITE_API_BASE_URL`, JSON headers, a 10-second timeout, and credentialed requests. The authentication flow relies on the API's cookie handling.
 - Zod schemas validate API responses and mutation inputs. The query client retries failed queries twice by default.

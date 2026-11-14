@@ -1,1 +1,1 @@
-export { useNote } from './api/use-note';
+export { getNoteOptions } from './api/use-note';

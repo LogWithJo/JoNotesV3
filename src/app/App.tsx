@@ -1,14 +1,19 @@
 import type React from 'react';
 import { useLogout } from '../features/user-logout';
-import { useState, type Dispatch, type SetStateAction } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { useAddNote } from '../features/add-note/api/use-add-note';
 import { useEditNote } from '../features/edit-note/api/use-edit-note';
 import { useDeleteNote } from '../features/delete-note/api/use-delete-note';
 import { useTogglePin } from '../features/toggle-pin/api/use-toggle-pin';
 import { useLogin } from '../features/user-login';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { getMeOptions } from '../entities/user';
-import { getNotesOptions } from '../entities/notes';
+import { getNotesOptions, type NoteId } from '../entities/notes';
+import { getNoteOptions } from '../features/get-note/api/use-note';
 import { useDebounceValue } from 'usehooks-ts';
 
 type Props = {
@@ -154,10 +159,30 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
   const [appliedFilterValue, setAppliedFilter] =
     useState<Parameters<typeof getNotesOptions>[0]>(undefined);
   const [appliedFilter] = useDebounceValue(appliedFilterValue, 1000);
+  const { data: selectedNote } = useQuery({
+    ...getNoteOptions(selectedNoteId ?? 0),
+    enabled: selectedNoteId !== null,
+  });
   const { data, isLoading, isError, isPlaceholderData } = useQuery({
     ...getNotesOptions(appliedFilter),
     placeholderData: keepPreviousData,
   });
+  const queryClient = useQueryClient();
+
+  const notePrefetch = (id: NoteId) => {
+    queryClient.prefetchQuery(getNoteOptions(id));
+  };
+
+  useEffect(() => {
+    const add = () => {
+      if (selectedNote && selectedNote.id === selectedNoteId) {
+        setTitle(selectedNote.title);
+        setContent(selectedNote.content);
+        setCategory(selectedNote.category);
+      }
+    };
+    add();
+  }, [selectedNote, selectedNoteId]);
 
   if (!isAuth) return;
 
@@ -327,12 +352,11 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           }) => (
             <div key={note.id}>
               <button
+                onMouseEnter={() => notePrefetch(note.id)}
+                onFocus={() => notePrefetch(note.id)}
                 type="button"
                 onClick={() => {
                   setSelectedNoteId(note.id);
-                  setTitle(note.title);
-                  setContent(note.content);
-                  setCategory(note.category);
                 }}
               >
                 {note.title}

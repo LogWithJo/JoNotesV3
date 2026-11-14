@@ -107,7 +107,7 @@ Variables prefixed with `VITE_` are exposed to browser code. Do not place secret
 │   │   │   ├── api/            # Edit-note request and mutation hook
 │   │   │   └── model/          # Edit-note input schema
 │   │   ├── get-note/
-│   │   │   └── api/            # Single-note request and query hook
+│   │   │   └── api/            # Single-note request and query-option factory
 │   │   ├── toggle-pin/
 │   │   │   └── api/            # Pin-toggle request and mutation hook
 │   │   ├── user-login/
@@ -135,14 +135,14 @@ The source is organized by application layer and feature. Feature-specific API o
 
 - `src/main.tsx` mounts the React application and wraps it in `StrictMode` and the TanStack Query provider.
 - `src/app/App.tsx` composes the current user, login, logout, and notes UI.
-- Feature directories contain their API functions, TanStack Query hooks, and input schemas where applicable.
+- Feature directories contain their API functions, TanStack Query hooks or query-option factories, and input schemas where applicable.
 - Entity directories contain reusable schemas, types, query option factories, and query keys.
 - Components use PascalCase names; hooks use the `use` prefix. Source files use relative imports.
 
 ## State Management and Data Fetching
 
 - React `useState` holds form values and the client-side authentication flag. The flag is persisted in browser local storage under `isAuth`.
-- TanStack Query loads the current user and notes. The notes query accepts category, search, and sort filters; changes are applied after a one-second debounce, and previous results stay visible while updated results are fetched. Successful note mutations invalidate note-list and affected detail queries; successful login and logout invalidate the current-user query.
+- TanStack Query loads the current user and notes. The notes query accepts category, search, and sort filters; changes are applied after a one-second debounce, and previous results stay visible while updated results are fetched. Note details are prefetched when a note is hovered or focused and loaded when it is selected. Successful note mutations invalidate note-list and affected detail queries; successful login and logout invalidate the current-user query.
 - The note query-key structure is documented in [the query-key reference](notes/api/query-keys.md).
 - The shared Axios client uses `VITE_API_BASE_URL`, JSON headers, a 10-second timeout, and credentialed requests. The authentication flow relies on the API's cookie handling.
 - Zod schemas validate API responses and mutation inputs. The query client retries failed queries twice by default.

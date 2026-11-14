@@ -20,7 +20,8 @@ STEP 1: UPDATE README.md (project root)
 
 STEP 2: COMMIT MESSAGE
 
-- Give me one commit message, 2 to 4 words.
+- Give me on
+- e commit message, 2 to 4 words.
 - Use a production-style Conventional Commit prefix: feat, fix, refactor, perf, style, docs, chore, or build.
 - Format: `type: short action phrase`, lowercase, imperative mood, no period.
 - It must describe the actual change, specific rather than vague (not "update files" or "fix stuff").

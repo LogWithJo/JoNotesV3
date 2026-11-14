@@ -4,7 +4,7 @@ import { getMe } from './user.api';
 
 export const getMeOptions = () => {
   return queryOptions({
-    queryFn: getMe,
+    queryFn: ({ signal }) => getMe(signal),
     queryKey: authKeys.me,
   });
 };

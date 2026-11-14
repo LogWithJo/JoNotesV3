@@ -6,6 +6,6 @@ import type { NotesFilters } from '../model/notes.schema';
 export const getNotesOptions = (param?: NotesFilters) => {
   return queryOptions({
     queryKey: [...notesKeys.all, param ?? null],
-    queryFn: () => getNotes(param),
+    queryFn: ({ signal }) => getNotes(signal, param),
   });
 };

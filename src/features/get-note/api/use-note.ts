@@ -4,7 +4,7 @@ import { notesKeys, type NoteId } from '../../../entities/notes';
 
 export const useNote = (id: NoteId) => {
   return useQuery({
-    queryFn: () => getNote(id),
+    queryFn: ({ signal }) => getNote(id, signal),
     queryKey: notesKeys.detail(id),
   });
 };

@@ -1,12 +1,19 @@
 # Graph Report - JoNotesV3  (2026-11-16)
 
 ## Corpus Check
-- Corpus is ~7,184 words - fits in a single context window. You may not need a graph.
+- 61 files · ~7,828 words
+- Verdict: corpus is large enough that graph structure adds value.
+- Unclassified: 3 file(s) not represented in the graph (top: (none) 1, .csv 1, .excalidraw 1)
 
 ## Summary
-- 210 nodes · 401 edges · 12 communities (11 shown, 1 thin omitted)
-- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.85)
+- 296 nodes · 477 edges · 23 communities (14 shown, 9 thin omitted)
+- Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.9)
 - Token cost: 0 input · 0 output
+
+## Graph Freshness
+- Built from commit: `79e0fc94`
+- Run `git rev-parse HEAD` and compare to check if the graph is stale.
+- Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Linting Dependencies
@@ -19,26 +26,29 @@
 - Workspace Build Tools
 - Login API Flow
 - Add Note API Flow
-- Package Scripts
+- 2) Authentication routes
 - TypeScript Project References
+- <Project Name>
+- JoNotesV3
+- Feature Specification to Evaluate
 
 ## God Nodes (most connected - your core abstractions)
-1. `compilerOptions` - 18 edges
-2. `compilerOptions` - 15 edges
-3. `@tanstack/react-query` - 14 edges
-4. `allowBuilds` - 13 edges
-5. `NoteId` - 11 edges
-6. `apiClient` - 11 edges
-7. `zod` - 8 edges
-8. `Notes()` - 8 edges
-9. `notesKeys` - 8 edges
-10. `App()` - 7 edges
+1. `<Project Name>` - 23 edges
+2. `compilerOptions` - 18 edges
+3. `compilerOptions` - 15 edges
+4. `JoNotesV3` - 15 edges
+5. `@tanstack/react-query` - 14 edges
+6. `allowBuilds` - 13 edges
+7. `2) Authentication routes` - 13 edges
+8. `NoteId` - 11 edges
+9. `apiClient` - 11 edges
+10. `3) Notes routes` - 9 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `Resource` --references--> `Note`  [INFERRED]
+  notes/api/Pagination.prompt.md → src/entities/notes/model/notes.schema.ts
 - `useLogout()` --indirect_call--> `logout()`  [INFERRED]
   src/features/user-logout/api/use-logout.ts → src/features/user-logout/api/logout.api.ts
-- `User()` --calls--> `getMeOptions()`  [EXTRACTED]
-  src/app/App.tsx → src/entities/user/api/use-get-me.ts
 - `Login()` --calls--> `useLogin()`  [EXTRACTED]
   src/app/App.tsx → src/features/user-login/api/use-login.ts
 - `Notes()` --calls--> `getNotesOptions()`  [EXTRACTED]
@@ -49,27 +59,27 @@
 ## Import Cycles
 - None detected.
 
-## Communities (12 total, 1 thin omitted)
+## Communities (23 total, 9 thin omitted)
 
 ### Community 0 - "Linting Dependencies"
-Cohesion: 0.08
-Nodes (37): devDependencies, @babel/core@^7.29.7, babel-plugin-react-compiler@^1.0.0, eslint@^10.14.0, @eslint/js@^10.0.1, eslint-plugin-react-hooks@^7.1.1, eslint-plugin-react-refresh@^0.5.7, globals@^17.13.0 (+29 more)
+Cohesion: 0.07
+Nodes (42): devDependencies, @babel/core@^7.29.7, babel-plugin-react-compiler@^1.0.0, eslint@^10.14.0, @eslint/js@^10.0.1, eslint-plugin-react-hooks@^7.1.1, eslint-plugin-react-refresh@^0.5.7, globals@^17.13.0 (+34 more)
 
 ### Community 1 - "Notes Data Access"
-Cohesion: 0.17
-Nodes (18): notesKeys, getNotes(), getNotesOptions(), Note, NoteId, noteIdSchema, noteSchema, NotesFilters (+10 more)
+Cohesion: 0.16
+Nodes (18): notesKeys, getNotes(), getNotesOptions(), NoteId, noteIdSchema, noteSchema, NotesFilters, notesFilterSchema (+10 more)
 
 ### Community 2 - "Application UI and Auth"
-Cohesion: 0.14
-Nodes (16): react, @tanstack/react-query, App(), Login(), Logout(), Notes(), Props, useIsAuth() (+8 more)
+Cohesion: 0.13
+Nodes (18): react, @tanstack/react-query, App(), Login(), Logout(), Notes(), Props, useIsAuth() (+10 more)
 
 ### Community 3 - "App TypeScript Settings"
 Cohesion: 0.10
 Nodes (19): compilerOptions, allowArbitraryExtensions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection (+11 more)
 
 ### Community 4 - "User Data Access"
-Cohesion: 0.17
-Nodes (11): zod@^4.6.7, zod, authKeys, getMeOptions(), getMe(), User, userRes, userSchema (+3 more)
+Cohesion: 0.20
+Nodes (8): zod@^4.6.7, zod, User, userRes, userSchema, logout(), LogoutResponse, logoutResponseSchema
 
 ### Community 5 - "Node TypeScript Settings"
 Cohesion: 0.12
@@ -91,24 +101,36 @@ Nodes (5): continueAuth(), useLogin(), LoginInput, loginResponseSchema, loginSch
 Cohesion: 0.50
 Nodes (4): addNote(), useAddNote(), AddNoteInput, addNoteInputSchema
 
-### Community 10 - "Package Scripts"
-Cohesion: 0.40
-Nodes (5): scripts, build, dev, lint, preview
+### Community 10 - "2) Authentication routes"
+Cohesion: 0.07
+Nodes (29): 1) Health and status, 2) Authentication routes, 3) Notes routes, 4) Notes and implementation summary, Authentication model, Base URL, `DELETE /notes`, `DELETE /notes/:id` (+21 more)
+
+### Community 12 - "<Project Name>"
+Cohesion: 0.08
+Nodes (23): Architecture & Conventions, Available Scripts, Browser Support, Build & Deployment, Code Quality, Contributing, Demo & Screenshots, Environment Variables (+15 more)
+
+### Community 13 - "JoNotesV3"
+Cohesion: 0.12
+Nodes (15): Architecture and Conventions, Available Scripts, Browser Support, Code Quality, Environment Variables, Getting Started, JoNotesV3, Knowledge Graph (+7 more)
+
+### Community 14 - "Feature Specification to Evaluate"
+Cohesion: 0.22
+Nodes (8): Critical Guardrails & Constraints (MUST FOLLOW), Endpoint 1: Offset pagination, Endpoint 2: Cursor pagination, Feature Specification to Evaluate, Requirements, Resource, Task: Safely Evaluate & Plan Pagination Implementation, Note
 
 ## Knowledge Gaps
-- **1 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `@tanstack/react-query` connect `Application UI and Auth` to `Linting Dependencies`, `Notes Data Access`, `User Data Access`, `Runtime Dependencies`, `Login API Flow`, `Add Note API Flow`?**
-  _High betweenness centrality (0.149) - this node is a cross-community bridge._
+- **Why does `@tanstack/react-query` connect `Application UI and Auth` to `Linting Dependencies`, `Notes Data Access`, `Runtime Dependencies`, `Login API Flow`, `Add Note API Flow`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
 - **Should `Linting Dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.07948717948717948 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06767676767676768 - nodes in this community are weakly interconnected._
 - **Why does `zod` connect `User Data Access` to `Linting Dependencies`, `Notes Data Access`, `Add Note API Flow`, `Login API Flow`?**
-  _High betweenness centrality (0.091) - this node is a cross-community bridge._
+  _High betweenness centrality (0.059) - this node is a cross-community bridge._
 - **Should `Application UI and Auth` be split into smaller, more focused modules?**
-  _Cohesion score 0.14153846153846153 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.13333333333333333 - nodes in this community are weakly interconnected._
 - **Should `App TypeScript Settings` be split into smaller, more focused modules?**
   _Cohesion score 0.1 - nodes in this community are weakly interconnected._
 - **Should `Node TypeScript Settings` be split into smaller, more focused modules?**

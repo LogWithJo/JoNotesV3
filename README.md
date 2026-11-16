@@ -6,16 +6,17 @@
 
 1. [Overview](#overview)
 2. [Tech Stack](#tech-stack)
-3. [Prerequisites](#prerequisites)
-4. [Getting Started](#getting-started)
-5. [Environment Variables](#environment-variables)
-6. [Available Scripts](#available-scripts)
-7. [Project Structure](#project-structure)
-8. [Architecture and Conventions](#architecture-and-conventions)
-9. [State Management and Data Fetching](#state-management-and-data-fetching)
-10. [Code Quality](#code-quality)
-11. [Production Build](#production-build)
-12. [Browser Support](#browser-support)
+3. [Knowledge Graph](#knowledge-graph)
+4. [Prerequisites](#prerequisites)
+5. [Getting Started](#getting-started)
+6. [Environment Variables](#environment-variables)
+7. [Available Scripts](#available-scripts)
+8. [Project Structure](#project-structure)
+9. [Architecture and Conventions](#architecture-and-conventions)
+10. [State Management and Data Fetching](#state-management-and-data-fetching)
+11. [Code Quality](#code-quality)
+12. [Production Build](#production-build)
+13. [Browser Support](#browser-support)
 
 ## Overview
 
@@ -29,7 +30,12 @@ JoNotesV3 is the frontend client for a note-taking application. Users can sign i
 - usehooks-ts for debouncing note filters
 - Axios for HTTP requests
 - Zod for request and response schemas
+- Graphify (`graphifyy`) for generating a codebase knowledge graph
 - ESLint with TypeScript, React Hooks, and React Refresh rules
+
+## Knowledge Graph
+
+Generated Graphify artifacts are stored in `graphify-out/`, including the interactive graph, graph data, report, and wiki. Start browsing the wiki at [its index](graphify-out/wiki/index.md).
 
 ## Prerequisites
 
@@ -83,10 +89,14 @@ Variables prefixed with `VITE_` are exposed to browser code. Do not place secret
 ├── notes/
 │   ├── AI/                     # AI prompt templates
 │   ├── api/                    # API, authentication, and query-key notes
+│   │   ├── Pagination.prompt.md # Pagination implementation planning prompt
 │   │   ├── query-keys.csv      # Query-key reference data
 │   │   ├── query-keys.excalidraw # Query-key diagram
 │   │   └── query-keys.md       # Query-key reference
-│   └── plan/                   # Project learning plan
+│   ├── plan/                   # Project learning plan
+│   ├── readme/                 # README templates and prompts
+│   └── reference/              # External conversation references
+├── graphify-out/               # Generated knowledge graph, report, and wiki
 ├── src/
 │   ├── app/                    # Root application components
 │   │   └── providers/          # TanStack Query provider and client
@@ -123,6 +133,7 @@ Variables prefixed with `VITE_` are exposed to browser code. Do not place secret
 ├── index.html                  # Vite HTML entry point
 ├── package.json                # Dependencies and scripts
 ├── pnpm-lock.yaml              # Locked dependency versions
+├── pnpm-workspace.yaml         # pnpm build-script approvals
 ├── tsconfig.json               # TypeScript project references
 ├── tsconfig.app.json           # Application TypeScript options
 ├── tsconfig.node.json          # Vite configuration TypeScript options

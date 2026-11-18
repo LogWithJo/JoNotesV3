@@ -6,7 +6,7 @@ import type { AddNoteInput } from '../model/add-note.schema';
 export const useAddNote = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (params: AddNoteInput) => addNote(params),
+    mutationFn: (noteInput: AddNoteInput) => addNote(noteInput),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: notesKeys.lists() }),
   });

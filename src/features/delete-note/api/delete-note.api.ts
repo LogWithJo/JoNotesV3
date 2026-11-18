@@ -1,11 +1,11 @@
 import { noteIdSchema, type NoteId } from '../../../entities/notes';
 import { apiClient } from '../../../shared/api';
 
-export async function deleteNote(id: NoteId) {
-  const parseId = noteIdSchema.safeParse(id);
-  if (!parseId.success) {
-    throw new Error(`invalid id: ${parseId.error.message}`);
+export async function deleteNote(noteId: NoteId) {
+  const parsedNoteId = noteIdSchema.safeParse(noteId);
+  if (!parsedNoteId.success) {
+    throw new Error(`Invalid note ID: ${parsedNoteId.error.message}`);
   }
-  const res = await apiClient.delete(`/notes/${parseId.data}`);
-  return res;
+  const response = await apiClient.delete(`/notes/${parsedNoteId.data}`);
+  return response;
 }

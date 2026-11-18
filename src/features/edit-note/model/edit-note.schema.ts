@@ -12,4 +12,4 @@ export const editNoteInputSchema = z.object({
 });
 
 export type EditNoteInput = z.infer<typeof editNoteInputSchema>;
-export type EditNoteParams = { id: NoteId; data: EditNoteInput };
+export type EditNoteParams = { noteId: NoteId; noteChanges: EditNoteInput };

@@ -6,11 +6,11 @@ import type { EditNoteParams } from '../model/edit-note.schema';
 export const useEditNote = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (params: EditNoteParams) => editNote(params),
-    onSuccess: (_, editNoteData) => {
+    mutationFn: (editParams: EditNoteParams) => editNote(editParams),
+    onSuccess: (_, editNoteParams) => {
       queryClient.invalidateQueries({ queryKey: notesKeys.lists() });
       queryClient.invalidateQueries({
-        queryKey: notesKeys.detail(editNoteData.id),
+        queryKey: notesKeys.detail(editNoteParams.noteId),
       });
     },
   });

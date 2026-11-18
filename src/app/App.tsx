@@ -1,10 +1,16 @@
 import type React from 'react';
 import { useLogout } from '../features/user-logout';
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import { useAddNote } from '../features/add-note/api/use-add-note';
-import { useEditNote } from '../features/edit-note/api/use-edit-note';
-import { useDeleteNote } from '../features/delete-note/api/use-delete-note';
-import { useTogglePin } from '../features/toggle-pin/api/use-toggle-pin';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
+import { useAddNote } from '../features/add-note';
+import { useEditNote } from '../features/edit-note';
+import { useDeleteNote } from '../features/delete-note';
+import { useTogglePin } from '../features/toggle-pin';
 import { useLogin } from '../features/user-login';
 import {
   keepPreviousData,
@@ -12,29 +18,39 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import { getMeOptions } from '../entities/user';
-import { getNotesOptions, type NoteId } from '../entities/notes';
-import { getNoteOptions } from '../features/get-note/api/use-note';
+import {
+  type NoteId,
+  type NotesFilters,
+  fetchOffsetNotes,
+  useInfiniteNotes,
+} from '../entities/notes';
+import { getNoteOptions } from '../features/get-note';
 import { useDebounceValue } from 'usehooks-ts';
+
+const DEFAULT_FILTER_DEBOUNCE_MS = 1000;
+const NOTES_PAGE_LIMIT = 4;
 
 type Props = {
   isAuth: boolean;
   onSuccess: Dispatch<SetStateAction<boolean>>;
 };
 
-const useIsAuth = () => {
-  const [auth, setAuth] = useState<boolean>(!!localStorage.getItem('isAuth'));
-  localStorage.setItem('isAuth', JSON.stringify(auth));
-  return [auth, setAuth] as const;
+const useAuthenticationState = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(
+    !!localStorage.getItem('isAuth'),
+  );
+  localStorage.setItem('isAuth', JSON.stringify(isAuthenticated));
+  return [isAuthenticated, setIsAuthenticated] as const;
 };
 
 function App() {
-  const [auth, setAuth] = useIsAuth();
+  const [isAuthenticated, setIsAuthenticated] = useAuthenticationState();
   return (
     <div>
-      <User isAuth={auth} />
-      <Login onSuccess={setAuth} isAuth={auth} />
-      <Logout onSuccess={setAuth} isAuth={auth} />
-      <Notes isAuth={auth} />
+      <User isAuth={isAuthenticated} />
+      <Login onSuccess={setIsAuthenticated} isAuth={isAuthenticated} />
+      <Logout onSuccess={setIsAuthenticated} isAuth={isAuthenticated} />
+      <Notes isAuth={isAuthenticated} />
     </div>
   );
 }
@@ -42,23 +58,27 @@ function App() {
 export default App;
 
 function User({ isAuth }: Pick<Props, 'isAuth'>) {
-  const { data, isLoading, isError } = useQuery(getMeOptions());
+  const {
+    data: currentUserResponse,
+    isLoading: isCurrentUserLoading,
+    isError: isCurrentUserError,
+  } = useQuery(getMeOptions());
 
   if (!isAuth) return;
 
   return (
     <div>
-      <div>{data?.user.email}</div>
-      <div>{data?.user.id}</div>
-      <div>{data?.user.createdAt}</div>
-      <div>{isLoading && 'loading...'}</div>
-      <div>{isError && 'error'}</div>
+      <div>{currentUserResponse?.user.email}</div>
+      <div>{currentUserResponse?.user.id}</div>
+      <div>{currentUserResponse?.user.createdAt}</div>
+      <div>{isCurrentUserLoading && 'loading...'}</div>
+      <div>{isCurrentUserError && 'error'}</div>
     </div>
   );
 }
 
 function Logout({ isAuth, onSuccess }: Props) {
-  const { mutate, isPending, isError } = useLogout();
+  const logoutMutation = useLogout();
 
   if (!isAuth) {
     return;
@@ -68,13 +88,15 @@ function Logout({ isAuth, onSuccess }: Props) {
     <div>
       <button
         onClick={() => {
-          mutate(undefined, { onSuccess: () => onSuccess(false) });
+          logoutMutation.mutate(undefined, {
+            onSuccess: () => onSuccess(false),
+          });
         }}
       >
         logout
       </button>
-      <div>{isPending && 'loading...'}</div>
-      <div>{isError && 'error'}</div>
+      <div>{logoutMutation.isPending && 'loading...'}</div>
+      <div>{logoutMutation.isError && 'error'}</div>
     </div>
   );
 }
@@ -83,15 +105,15 @@ function Login({ isAuth, onSuccess }: Props) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { mutate, isPending, isError } = useLogin();
+  const loginMutation = useLogin();
 
   if (isAuth) {
     return;
   }
 
-  function handlesubmit(e: React.FormEvent) {
-    e.preventDefault();
-    mutate(
+  function handleLoginSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    loginMutation.mutate(
       { name, email, password },
       {
         onSuccess: () => {
@@ -105,16 +127,16 @@ function Login({ isAuth, onSuccess }: Props) {
   }
   return (
     <form action="">
-      <div>{isPending && 'loading...'}</div>
-      <div>{isError && 'error'}</div>
+      <div>{loginMutation.isPending && 'loading...'}</div>
+      <div>{loginMutation.isError && 'error'}</div>
       <input
         placeholder="name"
         type="text"
         name="name"
         id="name"
         value={name}
-        onChange={(e) => {
-          setName(e.target.value);
+        onChange={(event) => {
+          setName(event.target.value);
         }}
       />
       <input
@@ -123,8 +145,8 @@ function Login({ isAuth, onSuccess }: Props) {
         name="email"
         id="email"
         value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
+        onChange={(event) => {
+          setEmail(event.target.value);
         }}
       />
       <input
@@ -133,11 +155,11 @@ function Login({ isAuth, onSuccess }: Props) {
         name="password"
         id="password"
         value={password}
-        onChange={(e) => {
-          setPassword(e.target.value);
+        onChange={(event) => {
+          setPassword(event.target.value);
         }}
       />
-      <button type="submit" onClick={handlesubmit}>
+      <button type="submit" onClick={handleLoginSubmit}>
         login
       </button>
     </form>
@@ -145,10 +167,10 @@ function Login({ isAuth, onSuccess }: Props) {
 }
 
 function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
-  const addNote = useAddNote();
-  const editNote = useEditNote();
-  const deleteNote = useDeleteNote();
-  const togglePin = useTogglePin();
+  const addNoteMutation = useAddNote();
+  const editNoteMutation = useEditNote();
+  const deleteNoteMutation = useDeleteNote();
+  const togglePinMutation = useTogglePin();
   const [selectedNoteId, setSelectedNoteId] = useState<number | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -156,32 +178,86 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
   const [filterCategory, setFilterCategory] = useState('');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState<'newest' | 'oldest' | 'az' | 'za'>('newest');
-  const [appliedFilterValue, setAppliedFilter] =
-    useState<Parameters<typeof getNotesOptions>[0]>(undefined);
-  const [appliedFilter] = useDebounceValue(appliedFilterValue, 1000);
+  const [notesMode, setNotesMode] = useState<'cursor' | 'offset'>('cursor');
+  const [page, setPage] = useState(1);
+  const pageLimit = NOTES_PAGE_LIMIT;
+  const [appliedFilterValue, setAppliedFilter] = useState<
+    NotesFilters | undefined
+  >(undefined);
+  const [appliedFilter] = useDebounceValue(
+    appliedFilterValue,
+    DEFAULT_FILTER_DEBOUNCE_MS,
+  );
+  const offsetFilters = appliedFilter ?? { sort };
+  const queryClient = useQueryClient();
   const { data: selectedNote } = useQuery({
     ...getNoteOptions(selectedNoteId ?? 0),
     enabled: selectedNoteId !== null,
   });
-  const { data, isLoading, isError, isPlaceholderData } = useQuery({
-    ...getNotesOptions(appliedFilter),
+  const {
+    data: cursorPageData,
+    isLoading: isCursorLoading,
+    isError: isCursorError,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteNotes({ limit: pageLimit }, offsetFilters);
+  const {
+    data: offsetPageData,
+    isLoading: isOffsetLoading,
+    isError: isOffsetError,
+    isPlaceholderData: isOffsetPlaceholderData,
+  } = useQuery({
+    ...fetchOffsetNotes({ page, limit: pageLimit }, offsetFilters),
     placeholderData: keepPreviousData,
+    enabled: notesMode === 'offset',
   });
-  const queryClient = useQueryClient();
+  const cursorEndRef = useRef<HTMLDivElement | null>(null);
 
-  const notePrefetch = (id: NoteId) => {
-    queryClient.prefetchQuery(getNoteOptions(id));
+  const prefetchNote = (noteId: NoteId) => {
+    queryClient.prefetchQuery(getNoteOptions(noteId));
+  };
+
+  const prefetchOffsetPage = (pageNumber: number) => {
+    queryClient.prefetchQuery({
+      ...fetchOffsetNotes({ page: pageNumber, limit: pageLimit }, offsetFilters),
+    });
   };
 
   useEffect(() => {
-    const add = () => {
+    const sentinelElement = cursorEndRef.current;
+    if (
+      notesMode !== 'cursor' ||
+      !sentinelElement ||
+      !hasNextPage ||
+      isCursorError
+    ) {
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && !isFetchingNextPage) {
+        void fetchNextPage();
+      }
+    });
+    observer.observe(sentinelElement);
+    return () => observer.disconnect();
+  }, [
+    fetchNextPage,
+    hasNextPage,
+    isCursorError,
+    isFetchingNextPage,
+    notesMode,
+  ]);
+
+  useEffect(() => {
+    const populateSelectedNoteForm = () => {
       if (selectedNote && selectedNote.id === selectedNoteId) {
         setTitle(selectedNote.title);
         setContent(selectedNote.content);
         setCategory(selectedNote.category);
       }
     };
-    add();
+    populateSelectedNoteForm();
   }, [selectedNote, selectedNoteId]);
 
   if (!isAuth) return;
@@ -189,13 +265,13 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
   return (
     <div>
       <form
-        onSubmit={(e) => {
-          e.preventDefault();
+        onSubmit={(event) => {
+          event.preventDefault();
           if (selectedNoteId !== null) {
-            editNote.mutate(
+            editNoteMutation.mutate(
               {
-                id: selectedNoteId,
-                data: { title, content, category },
+                noteId: selectedNoteId,
+                noteChanges: { title, content, category },
               },
               {
                 onSuccess: () => {
@@ -207,7 +283,7 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
               },
             );
           } else {
-            addNote.mutate(
+            addNoteMutation.mutate(
               { title, category },
               {
                 onSuccess: () => {
@@ -224,38 +300,44 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
         <input
           placeholder="title"
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(event) => setTitle(event.target.value)}
         />
         {selectedNoteId !== null && (
           <textarea
             placeholder="content"
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(event) => setContent(event.target.value)}
           />
         )}
         <input
           placeholder="category"
           value={category}
-          onChange={(e) => setCategory(e.target.value)}
+          onChange={(event) => setCategory(event.target.value)}
         />
         <button type="submit">
           {selectedNoteId !== null ? 'save note' : 'add note'}
         </button>
       </form>
-      <div>{addNote.isPending && 'loading...'}</div>
-      <div>{addNote.isError && 'error'}</div>
-      <div>{editNote.isPending && 'loading...'}</div>
-      <div>{editNote.isError && 'error'}</div>
-      <div>{isLoading && 'loading...'}</div>
-      <div>{isError && 'error'}</div>
+      <div>{addNoteMutation.isPending && 'loading...'}</div>
+      <div>{addNoteMutation.isError && 'error'}</div>
+      <div>{editNoteMutation.isPending && 'loading...'}</div>
+      <div>{editNoteMutation.isError && 'error'}</div>
+      <div>
+        {(notesMode === 'offset' ? isOffsetLoading : isCursorLoading) &&
+          'loading...'}
+      </div>
+      <div>
+        {(notesMode === 'offset' ? isOffsetError : isCursorError) && 'error'}
+      </div>
       <div>
         <input
           placeholder="filter by category"
           value={filterCategory}
-          onChange={(e) => {
-            setFilterCategory(e.target.value);
+          onChange={(event) => {
+            setFilterCategory(event.target.value);
+            setPage(1);
             setAppliedFilter({
-              category: e.target.value.trim() || undefined,
+              category: event.target.value.trim() || undefined,
               search: search.trim() || undefined,
               sort,
             });
@@ -264,11 +346,12 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
         <input
           placeholder="search notes"
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
+          onChange={(event) => {
+            setSearch(event.target.value);
+            setPage(1);
             setAppliedFilter({
               category: filterCategory.trim() || undefined,
-              search: e.target.value.trim() || undefined,
+              search: event.target.value.trim() || undefined,
               sort,
             });
           }}
@@ -277,6 +360,7 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           type="button"
           onClick={() => {
             setSort('newest');
+            setPage(1);
             setAppliedFilter({
               category: filterCategory.trim() || undefined,
               search: search.trim() || undefined,
@@ -290,6 +374,7 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           type="button"
           onClick={() => {
             setSort('oldest');
+            setPage(1);
             setAppliedFilter({
               category: filterCategory.trim() || undefined,
               search: search.trim() || undefined,
@@ -303,6 +388,7 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           type="button"
           onClick={() => {
             setSort('az');
+            setPage(1);
             setAppliedFilter({
               category: filterCategory.trim() || undefined,
               search: search.trim() || undefined,
@@ -316,6 +402,7 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           type="button"
           onClick={() => {
             setSort('za');
+            setPage(1);
             setAppliedFilter({
               category: filterCategory.trim() || undefined,
               search: search.trim() || undefined,
@@ -331,19 +418,34 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
             setFilterCategory('');
             setSearch('');
             setSort('newest');
+            setPage(1);
             setAppliedFilter(undefined);
           }}
         >
           clear filters
         </button>
       </div>
+      <button
+        type="button"
+        onClick={() => {
+          setNotesMode((mode) => (mode === 'cursor' ? 'offset' : 'cursor'));
+          setPage(1);
+        }}
+      >
+        {notesMode === 'cursor'
+          ? 'use offset pagination'
+          : 'use cursor pagination'}
+      </button>
       <div
         style={{
-          opacity: isPlaceholderData ? 0.5 : 1,
+          opacity: notesMode === 'offset' && isOffsetPlaceholderData ? 0.5 : 1,
           transition: 'opacity 0.2s',
         }}
       >
-        {data?.map(
+        {(notesMode === 'offset'
+          ? offsetPageData?.items
+          : cursorPageData?.pages.flatMap((page) => page.items)
+        )?.map(
           (note: {
             id: number;
             title: string;
@@ -352,8 +454,8 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           }) => (
             <div key={note.id}>
               <button
-                onMouseEnter={() => notePrefetch(note.id)}
-                onFocus={() => notePrefetch(note.id)}
+                onMouseEnter={() => prefetchNote(note.id)}
+                onFocus={() => prefetchNote(note.id)}
                 type="button"
                 onClick={() => {
                   setSelectedNoteId(note.id);
@@ -361,13 +463,16 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
               >
                 {note.title}
               </button>
-              <button type="button" onClick={() => togglePin.mutate(note.id)}>
+              <button
+                type="button"
+                onClick={() => togglePinMutation.mutate(note.id)}
+              >
                 toggle pin
               </button>
               <button
                 type="button"
                 onClick={() =>
-                  deleteNote.mutate(note.id, {
+                  deleteNoteMutation.mutate(note.id, {
                     onSuccess: () => {
                       if (selectedNoteId === note.id) {
                         setSelectedNoteId(null);
@@ -385,10 +490,52 @@ function Notes({ isAuth }: Pick<Props, 'isAuth'>) {
           ),
         )}
       </div>
-      <div>{deleteNote.isPending && 'loading...'}</div>
-      <div>{deleteNote.isError && 'error'}</div>
-      <div>{togglePin.isPending && 'loading...'}</div>
-      <div>{togglePin.isError && 'error'}</div>
+      {notesMode === 'cursor' && hasNextPage && <div ref={cursorEndRef} />}
+      {notesMode === 'offset' && (
+        <div>
+          <button
+            type="button"
+            disabled={page === 1 || isOffsetPlaceholderData}
+            onMouseEnter={() => prefetchOffsetPage(page - 1)}
+            onClick={() => setPage((current) => current - 1)}
+          >
+            previous
+          </button>
+          {Array.from(
+            { length: offsetPageData?.totalPages ?? 0 },
+            (_, index) => {
+              const pageNumber = index + 1;
+              return (
+                <button
+                  key={pageNumber}
+                  type="button"
+                  disabled={page === pageNumber || isOffsetPlaceholderData}
+                  onMouseEnter={() => prefetchOffsetPage(pageNumber)}
+                  onClick={() => setPage(pageNumber)}
+                >
+                  {pageNumber}
+                </button>
+              );
+            },
+          )}
+          <button
+            type="button"
+            disabled={
+              !offsetPageData ||
+              page >= offsetPageData.totalPages ||
+              isOffsetPlaceholderData
+            }
+            onMouseEnter={() => prefetchOffsetPage(page + 1)}
+            onClick={() => setPage((current) => current + 1)}
+          >
+            next
+          </button>
+        </div>
+      )}
+      <div>{deleteNoteMutation.isPending && 'loading...'}</div>
+      <div>{deleteNoteMutation.isError && 'error'}</div>
+      <div>{togglePinMutation.isPending && 'loading...'}</div>
+      <div>{togglePinMutation.isError && 'error'}</div>
     </div>
   );
 }

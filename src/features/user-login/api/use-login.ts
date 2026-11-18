@@ -6,9 +6,8 @@ import type { LoginInput } from '../model/login.schema';
 export const useLogin = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data: LoginInput) => {
-      console.log(data);
-      return continueAuth(data);
+    mutationFn: (loginInput: LoginInput) => {
+      return continueAuth(loginInput);
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: authKeys.me }),
   });

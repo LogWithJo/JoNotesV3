@@ -8,7 +8,7 @@ export const userSchema = z.object({
   createdAt: z.string().datetime(),
 });
 
-export const userRes = z.object({
+export const userResponseSchema = z.object({
   user: z.object({
     id: z.number().int().positive(),
     email: z.string().email(),

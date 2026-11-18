@@ -5,11 +5,11 @@ import {
   type LoginInput,
 } from '../model/login.schema';
 
-export async function continueAuth(data: LoginInput) {
-  const validPayload = loginSchema.safeParse(data);
-  if (!validPayload.success) {
-    throw new Error(`Invalid params ${validPayload.error.message}`);
+export async function continueAuth(loginInput: LoginInput) {
+  const parsedLoginInput = loginSchema.safeParse(loginInput);
+  if (!parsedLoginInput.success) {
+    throw new Error(`Invalid login input: ${parsedLoginInput.error.message}`);
   }
-  const res = await apiClient.post('/auth/continue', validPayload.data);
-  return loginResponseSchema.parse(res.data);
+  const response = await apiClient.post('/auth/continue', parsedLoginInput.data);
+  return loginResponseSchema.parse(response.data);
 }

@@ -1,11 +1,11 @@
 import { noteIdSchema, noteSchema, type NoteId } from '../../../entities/notes';
 import { apiClient } from '../../../shared/api';
 
-export async function togglePin(id: NoteId) {
-  const parseId = noteIdSchema.safeParse(id);
-  if (!parseId.success) {
-    throw new Error(`invalid id: ${parseId.error.message}`);
+export async function togglePin(noteId: NoteId) {
+  const parsedNoteId = noteIdSchema.safeParse(noteId);
+  if (!parsedNoteId.success) {
+    throw new Error(`Invalid note ID: ${parsedNoteId.error.message}`);
   }
-  const res = await apiClient.patch(`/notes/${id}/pin`);
-  return noteSchema.parse(res.data);
+  const response = await apiClient.patch(`/notes/${parsedNoteId.data}/pin`);
+  return noteSchema.parse(response.data);
 }

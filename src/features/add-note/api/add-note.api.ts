@@ -5,11 +5,11 @@ import {
   type AddNoteInput,
 } from '../model/add-note.schema';
 
-export async function addNote(data: AddNoteInput) {
-  const validPayload = addNoteInputSchema.safeParse(data);
-  if (!validPayload.success) {
-    throw new Error(`Invalid data type: ${validPayload.error.message}`);
+export async function addNote(noteInput: AddNoteInput) {
+  const parsedNoteInput = addNoteInputSchema.safeParse(noteInput);
+  if (!parsedNoteInput.success) {
+    throw new Error(`Invalid note input: ${parsedNoteInput.error.message}`);
   }
-  const res = await apiClient.post('/notes', validPayload.data);
-  return noteSchema.parse(res.data);
+  const response = await apiClient.post('/notes', parsedNoteInput.data);
+  return noteSchema.parse(response.data);
 }
